@@ -106,15 +106,102 @@ def get_responder_comparison():
     return subject_freq, statistics
 
 
-def main():
-    summary = get_population_frequencies()
-    print(summary.head())
-    print(f"Rows: {len(summary)}")
-    
-    subject_frequencies, statistics = get_responder_comparison()
+def get_baseline_subset():
+    query = """
+    SELECT
+        projects.project_code AS project,
+        subjects.subject_code AS subject,
+        samples.sample_code AS sample,
+        subjects.response,
+        subjects.sex
+    FROM samples
+    JOIN subjects ON subjects.id = samples.subject_id
+    JOIN projects ON projects.id = subjects.project_id
+    WHERE subjects.condition = 'melanoma'
+      AND subjects.treatment = 'miraclib'
+      AND samples.sample_type = 'PBMC'
+      AND samples.time_from_treatment_start = 0
+    ORDER BY projects.project_code, subjects.subject_code
+    """
 
-    print(subject_frequencies.head())
-    print(statistics.to_string(index=False))
+    with sqlite3.connect(DB_PATH) as conn:
+        subset = pd.read_sql_query(query, conn)
+
+    project_counts = (
+        subset.groupby("project")["sample"]
+        .nunique()
+        .reset_index(name="count")
+        .rename(columns={"project": "group"})
+        .assign(breakdown="project")
+    )
+
+    response_counts = (
+        subset.groupby("response")["subject"]
+        .nunique()
+        .reset_index(name="count")
+        .rename(columns={"response": "group"})
+        .assign(breakdown="response")
+    )
+
+    sex_counts = (
+        subset.groupby("sex")["subject"]
+        .nunique()
+        .reset_index(name="count")
+        .rename(columns={"sex": "group"})
+        .assign(breakdown="sex")
+    )
+
+    counts = pd.concat(
+        [project_counts, response_counts, sex_counts],
+        ignore_index=True,
+    )[["breakdown", "group", "count"]]
+
+    return subset, counts
+
+
+def get_form_answer():
+    query = """
+    SELECT
+        AVG(cell_counts.cell_count) AS average_b_cells,
+        COUNT(*) AS sample_count
+    FROM cell_counts
+    JOIN cell_populations
+        ON cell_populations.id = cell_counts.population_id
+    JOIN samples
+        ON samples.id = cell_counts.sample_id
+    JOIN subjects
+        ON subjects.id = samples.subject_id
+    WHERE subjects.condition = 'melanoma'
+      AND subjects.sex = 'M'
+      AND subjects.response = 'yes'
+      AND samples.time_from_treatment_start = 0
+      AND cell_populations.population_name = 'b_cell'
+    """
+
+    with sqlite3.connect(DB_PATH) as conn:
+        average, sample_count = conn.execute(query).fetchone()
+
+    return float(average), int(sample_count)
+
+
+def main():
+    # summary = get_population_frequencies()
+    # print(summary.head())
+    # print(f"Rows: {len(summary)}")
+    
+    # subject_frequencies, statistics = get_responder_comparison()
+
+    # print(subject_frequencies.head())
+    # print(statistics.to_string(index=False))
+    
+    subset, counts = get_baseline_subset()
+    average_b_cells, sample_count = get_form_answer()
+
+    print(subset.head())
+    print(f"Baseline samples: {len(subset)}")
+    print(counts.to_string(index=False))
+    print(f"Average B cells: {average_b_cells:.2f}")
+    print(f"Samples used: {sample_count}")
     
 if __name__ == "__main__":
     main()
