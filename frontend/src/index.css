@@ -39,6 +39,12 @@ main > p {
   color: #607089;
 }
 
+.overview-section,
+.responder-section,
+.baseline-section {
+  margin-top: 56px;
+}
+
 .js-plotly-plot {
   overflow: hidden;
   border: 1px solid #dfe6ef;
@@ -59,6 +65,19 @@ table {
   border: 1px solid #dfe6ef;
   border-radius: 12px;
   background: white;
+}
+
+.table-scroll {
+  max-height: 520px;
+  overflow: auto;
+  border-radius: 12px;
+}
+
+.table-scroll thead,
+.sample-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 th,
@@ -84,16 +103,90 @@ tbody tr:hover {
   background: #f8faff;
 }
 
+.table-controls {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.table-controls label {
+  color: #4a5a72;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.table-controls div {
+  display: flex;
+  gap: 8px;
+}
+
+input,
+button {
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font: inherit;
+}
+
+input {
+  min-width: 240px;
+  padding: 9px 12px;
+  color: #172033;
+  background: white;
+}
+
+button {
+  padding: 9px 14px;
+  color: white;
+  background: #2563eb;
+  cursor: pointer;
+}
+
+button:disabled {
+  color: #94a3b8;
+  background: #e2e8f0;
+  cursor: not-allowed;
+}
+
+.secondary-button {
+  color: #334155;
+  background: white;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+  color: #607089;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 700px) {
   main {
     width: min(100% - 24px, 1200px);
     padding-top: 28px;
   }
 
-  table {
-    display: block;
-    overflow-x: auto;
+  .table-scroll table,
+  .sample-table table {
+    min-width: 680px;
     white-space: nowrap;
+  }
+
+  .table-controls {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .table-controls div {
+    width: 100%;
+  }
+
+  input {
+    min-width: 0;
+    flex: 1;
   }
 }
 
@@ -117,10 +210,6 @@ tbody tr:hover {
   margin-top: 8px;
   color: #52637c;
   font-size: 0.9rem;
-}
-
-.baseline-section {
-  margin-top: 56px;
 }
 
 .section-description {
@@ -206,12 +295,6 @@ tbody tr:hover {
   max-height: 420px;
   overflow: auto;
   border-radius: 12px;
-}
-
-.sample-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 1;
 }
 
 @media (max-width: 700px) {
