@@ -1,6 +1,8 @@
 import sqlite3
 from pathlib import Path
 import pandas as pd
+from scipy.stats import mannwhitneyu
+
 
 ROOT = Path(__file__).resolve().parent
 DB_PATH = ROOT / "immune-cells.db"
@@ -29,16 +31,91 @@ def get_population_frequencies():
         return pd.read_sql_query(query, conn)
     
     
+def get_responder_comparison():
+    freq = get_population_frequencies()
+    
+    metadata_query = """
+    SELECT
+        samples.sample_code AS sample,
+        projects.project_code AS project,
+        subjects.subject_code AS subject,
+        subjects.condition,
+        subjects.treatment,
+        subjects.response,
+        samples.sample_type
+    FROM samples
+    JOIN subjects ON subjects.id = samples.subject_id
+    JOIN projects ON projects.id = subjects.project_id
+    """
+    
+    with sqlite3.connect(DB_PATH) as conn:
+        metadata = pd.read_sql_query(metadata_query, conn)
+        
+    data = freq.merge(metadata, on="sample", validate="many_to_one")
+    
+    filtered = data[
+        (data["condition"] == "melanoma")
+        & (data["treatment"] == "miraclib")
+        & (data["sample_type"] == "PBMC")
+        & (data["response"].isin(["yes", "no"]))
+    ]
+    
+    subject_freq = (
+        filtered.groupby(
+            ["project", "subject", "response", "population"], as_index=False,
+        )["percentage"].mean().rename(columns={"percentage": "mean_percentage"})
+    )
+    
+    results = []
+    
+    for population, group in subject_freq.groupby("population"):
+        responders = group.loc[group["response"] == "yes", "mean_percentage"]
+        nonresponders = group.loc[group["response"] == "no", "mean_percentage"]
+        test = mannwhitneyu(
+            responders,
+            nonresponders,
+            alternative="two-sided",
+        )
+
+        results.append(
+            {
+                "population": population,
+                "responders_n": len(responders),
+                "nonresponders_n": len(nonresponders),
+                "responders_median": responders.median(),
+                "nonresponders_median": nonresponders.median(),
+                "median_difference": (
+                    responders.median() - nonresponders.median()
+                ),
+                "mann_whitney_u": test.statistic,
+                "p_value": test.pvalue,
+            }
+        )
+        
+    statistics = pd.DataFrame(results)
+    
+    # Bonferroni correction for the five population comparisons.
+    statistics["adjusted_p_value"] = (
+        statistics["p_value"] * len(statistics)
+    ).clip(upper=1)
+
+    statistics["significant"] = (
+        statistics["adjusted_p_value"] < 0.05
+    )
+    
+    return subject_freq, statistics
+
+
 def main():
     summary = get_population_frequencies()
     print(summary.head())
     print(f"Rows: {len(summary)}")
     
-    # rows_per_sample = summary.groupby("sample").size()
-    # print(rows_per_sample.value_counts())
-    # assert rows_per_sample.eq(5).all()
+    subject_frequencies, statistics = get_responder_comparison()
 
-    # summary.to_csv("population_freq.csv", index=False)
+    print(subject_frequencies.head())
+    print(statistics.to_string(index=False))
+    
 if __name__ == "__main__":
     main()
     
