@@ -118,3 +118,113 @@ tbody tr:hover {
   color: #52637c;
   font-size: 0.9rem;
 }
+
+.baseline-section {
+  margin-top: 56px;
+}
+
+.section-description {
+  margin: -8px 0 24px;
+  color: #607089;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.summary-card,
+.metric-card {
+  border: 1px solid #dfe6ef;
+  border-radius: 12px;
+  background: white;
+}
+
+.summary-card {
+  padding: 20px;
+}
+
+.summary-card h3,
+.metric-card h3 {
+  margin: 0 0 16px;
+  color: #14213d;
+}
+
+.count-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-top: 1px solid #e8edf4;
+}
+
+.metric-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+  margin-top: 16px;
+  padding: 24px;
+}
+
+.metric-card p {
+  margin: 0;
+  color: #607089;
+}
+
+.metric-card > div:last-child {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.metric-card > div:last-child strong {
+  color: #2563eb;
+  font-size: 2rem;
+}
+
+.metric-card > div:last-child span {
+  color: #607089;
+}
+
+.sample-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+}
+
+.sample-heading span {
+  padding: 3px 9px;
+  border-radius: 999px;
+  color: #1d4ed8;
+  background: #dbeafe;
+  font-size: 0.8rem;
+}
+
+.sample-table {
+  max-height: 420px;
+  overflow: auto;
+  border-radius: 12px;
+}
+
+.sample-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+@media (max-width: 700px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-card {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .metric-card > div:last-child {
+    text-align: left;
+  }
+}
