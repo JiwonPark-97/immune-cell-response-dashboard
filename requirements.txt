@@ -1,4 +1,4 @@
-fastapi
-pandas
-scipy
-uvicorn[standard]
+fastapi==0.141.1
+pandas==3.0.5
+scipy==1.18.1
+uvicorn[standard]==0.52.4
